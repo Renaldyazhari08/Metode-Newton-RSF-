@@ -11,8 +11,7 @@ class LoadSolutionsScreen extends StatelessWidget {
 
   void _deleteSolution(int id) async {
     await _dbHelper.deleteSolution(id);
-    // Perbarui layar setelah solusi dihapus
-    (await _loadSolutions()).clear(); // Membersihkan list sebelumnya
+    (await _loadSolutions()).clear();
   }
 
   @override
@@ -38,11 +37,17 @@ class LoadSolutionsScreen extends StatelessWidget {
                 final solution = solutions[index];
                 return Card(
                   child: ListTile(
-                    title: Text('Persamaan: ${solution.equation}'),
+                    title: Text(
+                      'Persamaan: ${solution.equation}',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
-                        'x0: ${solution.x0}, Error: ${solution.error}, Hasil: ${solution.result}'),
+                      'x0: ${solution.x0}, Error: ${solution.error}, Hasil: ${solution.result}',
+                      style: TextStyle(fontSize: 14),
+                    ),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         _deleteSolution(solution.id!);
                       },

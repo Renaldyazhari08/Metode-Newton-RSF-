@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Metode Newton',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(),
     );
@@ -94,7 +95,6 @@ class _MyHomePageState extends State<MyHomePage> {
         _x0Controller.text = solution.x0.toString();
         _errorController.text = solution.error.toString();
         _result = solution.result;
-        // Optionally, load the iterations if you save them in the DB
       });
     }
   }
@@ -117,9 +117,18 @@ class _MyHomePageState extends State<MyHomePage> {
           key: _formKey,
           child: Column(
             children: [
+              Text(
+                'Dibuat oleh Renaldy, Fahmi, dan Sadam',
+                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              ),
+              SizedBox(height: 20),
               TextFormField(
                 controller: _equationController,
-                decoration: InputDecoration(labelText: 'Persamaan'),
+                decoration: InputDecoration(
+                  labelText: 'Persamaan',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.functions),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Masukkan persamaan';
@@ -127,9 +136,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   return null;
                 },
               ),
+              SizedBox(height: 10),
               TextFormField(
                 controller: _x0Controller,
-                decoration: InputDecoration(labelText: 'Nilai x0'),
+                decoration: InputDecoration(
+                  labelText: 'Nilai x0',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.exposure),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -141,9 +155,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   return null;
                 },
               ),
+              SizedBox(height: 10),
               TextFormField(
                 controller: _errorController,
-                decoration: InputDecoration(labelText: 'Nilai Error'),
+                decoration: InputDecoration(
+                  labelText: 'Nilai Error',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.error_outline),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -158,27 +177,52 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(height: 20),
               Row(
                 children: [
-                  ElevatedButton(
-                    onPressed: _solveEquation,
-                    child: Text('Solve'),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _solveEquation,
+                      child: Text('Solve'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
                   ),
                   SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _saveSolution,
-                    child: Text('Save'),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saveSolution,
+                      child: Text('Save'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
                   ),
                 ],
               ),
               SizedBox(height: 20),
               if (_result != null)
                 Text(
-                    'Hasil: ${_result!.isNaN ? 'Tidak valid (NaN)' : _result}'),
+                  'Hasil: ${_result!.isNaN ? 'Tidak valid (NaN)' : _result}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               if (_iterations.isNotEmpty) ...[
-                Text('Iterasi:'),
-                ..._iterations.map((iteration) {
-                  return Text(
-                      'Langkah: ${iteration.step}, x: ${iteration.x}, h: ${iteration.h}');
-                }).toList(),
+                Text(
+                  'Iterasi:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _iterations.length,
+                    itemBuilder: (context, index) {
+                      final iteration = _iterations[index];
+                      return ListTile(
+                        title: Text(
+                          'Langkah: ${iteration.step}, x: ${iteration.x}, h: ${iteration.h}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ],
           ),
