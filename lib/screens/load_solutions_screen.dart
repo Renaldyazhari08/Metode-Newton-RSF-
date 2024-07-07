@@ -9,6 +9,12 @@ class LoadSolutionsScreen extends StatelessWidget {
     return await _dbHelper.getSolutions();
   }
 
+  void _deleteSolution(int id) async {
+    await _dbHelper.deleteSolution(id);
+    // Perbarui layar setelah solusi dihapus
+    (await _loadSolutions()).clear(); // Membersihkan list sebelumnya
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,6 +41,12 @@ class LoadSolutionsScreen extends StatelessWidget {
                     title: Text('Persamaan: ${solution.equation}'),
                     subtitle: Text(
                         'x0: ${solution.x0}, Error: ${solution.error}, Hasil: ${solution.result}'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        _deleteSolution(solution.id!);
+                      },
+                    ),
                     onTap: () {
                       Navigator.pop(context, solution);
                     },
