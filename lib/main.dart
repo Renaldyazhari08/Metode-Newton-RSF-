@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Newton Solver',
+      title: 'Metode Newton',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -37,20 +37,11 @@ class _MyHomePageState extends State<MyHomePage> {
   double? _result;
   List<Iteration> _iterations = [];
   late DBHelper _dbHelper;
-  List<Solution> _solutions = [];
 
   @override
   void initState() {
     super.initState();
     _dbHelper = DBHelper();
-    _loadSolutions();
-  }
-
-  void _loadSolutions() async {
-    List<Solution> solutions = await _dbHelper.getSolutions();
-    setState(() {
-      _solutions = solutions;
-    });
   }
 
   void _solveEquation() {
@@ -59,20 +50,28 @@ class _MyHomePageState extends State<MyHomePage> {
       double x0 = double.parse(_x0Controller.text);
       double error = double.parse(_errorController.text);
 
-      NewtonSolver solver =
-          NewtonSolver(equation: equation, x0: x0, error: error);
-      List<Iteration> iterations = solver.solve();
-      double result = iterations.last.x;
+      try {
+        NewtonSolver solver =
+            NewtonSolver(equation: equation, x0: x0, error: error);
+        List<Iteration> iterations = solver.solve();
+        double result = iterations.last.x;
 
-      setState(() {
-        _iterations = iterations;
-        _result = result;
-      });
+        setState(() {
+          _iterations = iterations;
+          _result = result;
+        });
+      } catch (e) {
+        setState(() {
+          _iterations = [];
+          _result = double.nan;
+        });
+        print('Error: $e');
+      }
     }
   }
 
   void _saveSolution() async {
-    if (_result != null) {
+    if (_result != null && !_result!.isNaN) {
       Solution solution = Solution(
         equation: _equationController.text,
         x0: double.parse(_x0Controller.text),
@@ -80,13 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
         result: _result!,
       );
       await _dbHelper.insertSolution(solution);
-      _loadSolutions();
     }
-  }
-
-  void _deleteSolution(int id) async {
-    await _dbHelper.deleteSolution(id);
-    _loadSolutions();
   }
 
   Future<void> _loadSolution() async {
@@ -101,13 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _x0Controller.text = solution.x0.toString();
         _errorController.text = solution.error.toString();
         _result = solution.result;
-
-        NewtonSolver solver = NewtonSolver(
-          equation: solution.equation,
-          x0: solution.x0,
-          error: solution.error,
-        );
-        _iterations = solver.solve();
+        // Optionally, load the iterations if you save them in the DB
       });
     }
   }
@@ -144,12 +131,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: _x0Controller,
                 decoration: InputDecoration(labelText: 'Nilai x0'),
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*\.?[0-9]*'))
-                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Masukkan nilai x0';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Masukkan angka yang valid';
                   }
                   return null;
                 },
@@ -158,12 +145,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: _errorController,
                 decoration: InputDecoration(labelText: 'Nilai Error'),
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*\.?[0-9]*'))
-                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Masukkan nilai error';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Masukkan angka yang valid';
                   }
                   return null;
                 },
@@ -184,52 +171,15 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               SizedBox(height: 20),
               if (_result != null)
-                Column(
-                  children: [
-                    Text('Hasil: $_result', style: TextStyle(fontSize: 20)),
-                    SizedBox(height: 20),
-                    Text('Iterasi:',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Container(
-                      height: 200,
-                      child: ListView.builder(
-                        itemCount: _iterations.length,
-                        itemBuilder: (context, index) {
-                          final iteration = _iterations[index];
-                          return ListTile(
-                            title: Text('Langkah: ${iteration.step}'),
-                            subtitle:
-                                Text('x: ${iteration.x}, h: ${iteration.h}'),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              SizedBox(height: 20),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _solutions.length,
-                  itemBuilder: (context, index) {
-                    final solution = _solutions[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text('Persamaan: ${solution.equation}'),
-                        subtitle: Text(
-                            'x0: ${solution.x0}, Error: ${solution.error}, Hasil: ${solution.result}'),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () {
-                            _deleteSolution(solution.id!);
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                Text(
+                    'Hasil: ${_result!.isNaN ? 'Tidak valid (NaN)' : _result}'),
+              if (_iterations.isNotEmpty) ...[
+                Text('Iterasi:'),
+                ..._iterations.map((iteration) {
+                  return Text(
+                      'Langkah: ${iteration.step}, x: ${iteration.x}, h: ${iteration.h}');
+                }).toList(),
+              ],
             ],
           ),
         ),
