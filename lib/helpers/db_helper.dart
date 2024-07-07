@@ -45,22 +45,19 @@ class DBHelper {
   Future<List<Solution>> getSolutions() async {
     Database db = await database;
     var res = await db.query('solutions');
-    List<Solution> list = res.isNotEmpty
-        ? res
-            .map((c) => Solution(
-                  id: c['id'] as int,
-                  equation: c['equation'] as String,
-                  x0: c['x0'] as double,
-                  error: c['error'] as double,
-                  result: c['result'] as double,
-                ))
-            .toList()
-        : [];
+    List<Solution> list =
+        res.isNotEmpty ? res.map((c) => Solution.fromMap(c)).toList() : [];
     return list;
   }
 
   Future<int> deleteSolution(int id) async {
     Database db = await database;
     return await db.delete('solutions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<Solution?> getSolution(int id) async {
+    Database db = await database;
+    var res = await db.query('solutions', where: 'id = ?', whereArgs: [id]);
+    return res.isNotEmpty ? Solution.fromMap(res.first) : null;
   }
 }
